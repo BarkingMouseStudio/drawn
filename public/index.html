@@ -1,14 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <title>drawn</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Drawn</title>
+
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>
+    <link href='main.css' rel='stylesheet'>
+
   </head>
-  <body> 
-    <div id="container"></div>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
-    <script src="/libs/three.min.js"></script>
-    <script src="/main.js"></script>
+  <body>
+
+    <script src='deps/three/build/three.js' defer></script>
+    <script src='deps/three/examples/js/Stats.js' defer></script>
+    <script src='deps/three/examples/js/ShaderExtras.js' defer></script>
+    <script src='deps/three/examples/js/postprocessing/MaskPass.js' defer></script>
+    <script src='deps/three/examples/js/postprocessing/RenderPass.js' defer></script>
+    <script src='deps/three/examples/js/postprocessing/BloomPass.js' defer></script>
+    <script src='deps/three/examples/js/postprocessing/ShaderPass.js' defer></script>
+    <script src='deps/three/examples/js/postprocessing/EffectComposer.js' defer></script>
+    <script src='main.js' defer></script>
+
   </body>
 </html>

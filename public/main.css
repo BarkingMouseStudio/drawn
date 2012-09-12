@@ -1,0 +1,9 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+body #stats {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
