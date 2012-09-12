@@ -78,7 +78,7 @@ width = window.innerWidth
 height = window.innerHeight
 
 half_width = width / 2
-half_height = height / 2
+half_height = height / 2 #/ Comment to fix Codas bad syntax highlighter.
 
 particle_system = null
 
@@ -102,7 +102,7 @@ init_particles = (scene) ->
   material = new THREE.ParticleBasicMaterial
     color: 0x000000
     size: 20
-    map: THREE.ImageUtils.loadTexture('images/ash.png')
+    map: THREE.ImageUtils.loadTexture('../images/ash.png')
     blending: THREE.NormalBlending
     transparent: true
 
@@ -166,7 +166,7 @@ init_scene = ->
 init_geometry = (scene) ->
   material = new THREE.MeshLambertMaterial(color: 0x888888)
 
-  return loadGeometry('models/sleeping_woman.js').pipe (geometry) ->
+  return loadGeometry('../models/sleeping_woman.js').pipe (geometry) ->
     mesh = new THREE.Mesh(geometry, material)
     mesh.scale.set(5, 5, 5)
     # mesh.rotation.set(random(), random(), random())
@@ -188,7 +188,7 @@ init_background = ->
   camera.position.z = 100
 
   material = new THREE.MeshBasicMaterial
-    map: THREE.ImageUtils.loadTexture('images/vitruvian.jpg')
+    map: THREE.ImageUtils.loadTexture('../images/vitruvian.jpg')
     depthTest: false
 
   mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material)

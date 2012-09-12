@@ -131,7 +131,7 @@
     material = new THREE.ParticleBasicMaterial({
       color: 0x000000,
       size: 20,
-      map: THREE.ImageUtils.loadTexture('images/ash.png'),
+      map: THREE.ImageUtils.loadTexture('../images/ash.png'),
       blending: THREE.NormalBlending,
       transparent: true
     });
@@ -209,7 +209,7 @@
     material = new THREE.MeshLambertMaterial({
       color: 0x888888
     });
-    return loadGeometry('models/sleeping_woman.js').pipe(function(geometry) {
+    return loadGeometry('../models/sleeping_woman.js').pipe(function(geometry) {
       var mesh;
       mesh = new THREE.Mesh(geometry, material);
       mesh.scale.set(5, 5, 5);
@@ -233,7 +233,7 @@
     camera = new THREE.OrthographicCamera(-half_width, half_width, half_height, -half_height, -10000, 10000);
     camera.position.z = 100;
     material = new THREE.MeshBasicMaterial({
-      map: THREE.ImageUtils.loadTexture('images/vitruvian.jpg'),
+      map: THREE.ImageUtils.loadTexture('../images/vitruvian.jpg'),
       depthTest: false
     });
     mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
