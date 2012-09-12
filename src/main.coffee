@@ -1,17 +1,45 @@
 document.onselectstart = -> false
 
+mouse_down = false
+targetRotation = 0
+targetRotationOnMouseDown = 0
+mouseX = 0
+mouseXOnMouseDown = 0
+
+document.addEventListener 'mousedown', (e) ->
+  e.preventDefault()
+  mouse_down = true
+  mouseXOnMouseDown = event.clientX - half_width
+  targetRotationOnMouseDown = targetRotation
+, false
+
+document.addEventListener 'mousemove', (e) ->
+  unless mouse_down
+    return
+
+  mouseX = event.clientX - half_width
+  targetRotation = targetRotationOnMouseDown + (mouseX - mouseXOnMouseDown) * 0.02
+, false
+
+document.addEventListener 'mouseup', (e) ->
+  e.preventDefault()
+  mouse_down = false
+, false
+
+shape = null
+
 particle_bounds = 500
 gravity = new THREE.Vector3(0, -9.8, 0)
+drag = 0.00015
 
 class Particle3D extends THREE.Vector3
   constructor: ->
-    @drag = 0.00015
     @mass = random(0, 1)
     @set(random(-particle_bounds, particle_bounds),
          random(-particle_bounds, particle_bounds),
          random(-particle_bounds, particle_bounds))
-    @velocity = new THREE.Vector3(random(), random(), random()) 
     @acceleration = new THREE.Vector3(0, 0, 0)
+    @velocity = new THREE.Vector3(random(), random(), random()) 
 
   update: ->
     if @x < -particle_bounds
@@ -32,7 +60,7 @@ class Particle3D extends THREE.Vector3
     @acceleration.multiplyScalar(0)
     @acceleration.addSelf(gravity)
     @acceleration.multiplyScalar(@mass)
-    @acceleration.multiplyScalar(@drag)
+    @acceleration.multiplyScalar(drag)
 
     @velocity.addSelf(@acceleration)
 
@@ -53,7 +81,6 @@ half_width = width / 2
 half_height = height / 2
 
 particle_system = null
-camera_controls = null
 
 init_particle = (particle) ->
   [px, py, pz] = [random(-particle_bounds, particle_bounds),
@@ -88,6 +115,16 @@ init_particles = (scene) ->
   scene.add(particle_system)
   return particle_system
 
+loadGeometry = (url) ->
+  deferred = new Deferred()
+  loader = new THREE.GeometryLoader()
+  loader.addEventListener 'error', (event) ->
+    deferred.reject(new Error(event.message))
+  loader.addEventListener 'load', (event) ->
+    deferred.resolve(event.content)
+  loader.load(url)
+  return deferred.promise()
+
 update_particles = ->
   particle_system_geometry = particle_system.geometry
   particles = particle_system_geometry.vertices
@@ -111,8 +148,7 @@ init_camera = (width, height) ->
 
   camera = new THREE.PerspectiveCamera(view_angle, aspect_ratio, near, far)
   camera.position.z = 300
-  controls = new THREE.TrackballControls(camera)
-  return [camera, controls]
+  return camera
 
 init_lights = (scene) ->
   ambient_light = new THREE.AmbientLight(0x222222)
@@ -124,14 +160,18 @@ init_lights = (scene) ->
 
 init_scene = ->
   scene = new THREE.Scene()
-  # scene.fog = new THREE.FogExp2(0xffffff, 0.002)
+  scene.fog = new THREE.FogExp2(0xffffff, 0.002)
   return scene
 
-init_cube = (scene) ->
-  geometry = new THREE.CubeGeometry(100, 100, 100)
+init_geometry = (scene) ->
   material = new THREE.MeshLambertMaterial(color: 0x888888)
-  mesh = new THREE.Mesh(geometry, material)
-  scene.add(mesh)
+
+  return loadGeometry('models/sleeping_woman.js').pipe (geometry) ->
+    mesh = new THREE.Mesh(geometry, material)
+    mesh.scale.set(5, 5, 5)
+    # mesh.rotation.set(random(), random(), random())
+    scene.add(mesh)
+    return mesh
 
 init_renderer = (width, height) ->
   renderer = new THREE.WebGLRenderer()
@@ -160,10 +200,10 @@ init_background = ->
   return [scene, camera]
 
 init_foreground = ->
-  [camera, camera_controls] = init_camera(width, height)
+  camera = init_camera(width, height)
   scene = init_scene()
   init_lights(scene)
-  init_cube(scene)
+  init_geometry(scene).done (mesh) -> shape = mesh
   particle_system = init_particles(scene)
   return [scene, camera]
 
@@ -201,7 +241,8 @@ animate = ->
   requestAnimationFrame(animate)
 
   update_particles()
-  camera_controls.update()
+  if shape
+    shape.rotation.y += (targetRotation - shape.rotation.y) * 0.05
 
   renderer.clear()
   composer.render(0.1)

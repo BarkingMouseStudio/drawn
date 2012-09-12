@@ -1,5 +1,5 @@
 (function() {
-  var Particle3D, animate, bind, camera_controls, composer, gravity, half_height, half_width, height, init_background, init_camera, init_composer, init_cube, init_foreground, init_lights, init_particle, init_particles, init_renderer, init_scene, init_stats, particle_bounds, particle_system, random, random_int, renderer, stats, update_particles, width,
+  var Particle3D, animate, bind, composer, drag, gravity, half_height, half_width, height, init_background, init_camera, init_composer, init_foreground, init_geometry, init_lights, init_particle, init_particles, init_renderer, init_scene, init_stats, loadGeometry, mouseX, mouseXOnMouseDown, mouse_down, particle_bounds, particle_system, random, random_int, renderer, shape, stats, targetRotation, targetRotationOnMouseDown, update_particles, width,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -7,20 +7,53 @@
     return false;
   };
 
+  mouse_down = false;
+
+  targetRotation = 0;
+
+  targetRotationOnMouseDown = 0;
+
+  mouseX = 0;
+
+  mouseXOnMouseDown = 0;
+
+  document.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    mouse_down = true;
+    mouseXOnMouseDown = event.clientX - half_width;
+    return targetRotationOnMouseDown = targetRotation;
+  }, false);
+
+  document.addEventListener('mousemove', function(e) {
+    if (!mouse_down) {
+      return;
+    }
+    mouseX = event.clientX - half_width;
+    return targetRotation = targetRotationOnMouseDown + (mouseX - mouseXOnMouseDown) * 0.02;
+  }, false);
+
+  document.addEventListener('mouseup', function(e) {
+    e.preventDefault();
+    return mouse_down = false;
+  }, false);
+
+  shape = null;
+
   particle_bounds = 500;
 
   gravity = new THREE.Vector3(0, -9.8, 0);
+
+  drag = 0.00015;
 
   Particle3D = (function(_super) {
 
     __extends(Particle3D, _super);
 
     function Particle3D() {
-      this.drag = 0.00015;
       this.mass = random(0, 1);
       this.set(random(-particle_bounds, particle_bounds), random(-particle_bounds, particle_bounds), random(-particle_bounds, particle_bounds));
-      this.velocity = new THREE.Vector3(random(), random(), random());
       this.acceleration = new THREE.Vector3(0, 0, 0);
+      this.velocity = new THREE.Vector3(random(), random(), random());
     }
 
     Particle3D.prototype.update = function() {
@@ -42,7 +75,7 @@
       this.acceleration.multiplyScalar(0);
       this.acceleration.addSelf(gravity);
       this.acceleration.multiplyScalar(this.mass);
-      this.acceleration.multiplyScalar(this.drag);
+      this.acceleration.multiplyScalar(drag);
       this.velocity.addSelf(this.acceleration);
       return this.addSelf(this.velocity);
     };
@@ -79,8 +112,6 @@
 
   particle_system = null;
 
-  camera_controls = null;
-
   init_particle = function(particle) {
     var ax, ay, az, px, py, pz, vx, vy, vz, _ref, _ref1, _ref2;
     _ref = [random(-particle_bounds, particle_bounds), random(-particle_bounds, particle_bounds), random(-particle_bounds, particle_bounds)], px = _ref[0], py = _ref[1], pz = _ref[2];
@@ -114,6 +145,20 @@
     return particle_system;
   };
 
+  loadGeometry = function(url) {
+    var deferred, loader;
+    deferred = new Deferred();
+    loader = new THREE.GeometryLoader();
+    loader.addEventListener('error', function(event) {
+      return deferred.reject(new Error(event.message));
+    });
+    loader.addEventListener('load', function(event) {
+      return deferred.resolve(event.content);
+    });
+    loader.load(url);
+    return deferred.promise();
+  };
+
   update_particles = function() {
     var p_count, particle_system_geometry, particles;
     particle_system_geometry = particle_system.geometry;
@@ -133,15 +178,14 @@
   };
 
   init_camera = function(width, height) {
-    var aspect_ratio, camera, controls, far, near, view_angle;
+    var aspect_ratio, camera, far, near, view_angle;
     view_angle = 45;
     aspect_ratio = width / height;
     near = 1;
     far = 10000;
     camera = new THREE.PerspectiveCamera(view_angle, aspect_ratio, near, far);
     camera.position.z = 300;
-    controls = new THREE.TrackballControls(camera);
-    return [camera, controls];
+    return camera;
   };
 
   init_lights = function(scene) {
@@ -156,17 +200,22 @@
   init_scene = function() {
     var scene;
     scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0xffffff, 0.002);
     return scene;
   };
 
-  init_cube = function(scene) {
-    var geometry, material, mesh;
-    geometry = new THREE.CubeGeometry(100, 100, 100);
+  init_geometry = function(scene) {
+    var material;
     material = new THREE.MeshLambertMaterial({
       color: 0x888888
     });
-    mesh = new THREE.Mesh(geometry, material);
-    return scene.add(mesh);
+    return loadGeometry('models/sleeping_woman.js').pipe(function(geometry) {
+      var mesh;
+      mesh = new THREE.Mesh(geometry, material);
+      mesh.scale.set(5, 5, 5);
+      scene.add(mesh);
+      return mesh;
+    });
   };
 
   init_renderer = function(width, height) {
@@ -196,11 +245,13 @@
   };
 
   init_foreground = function() {
-    var camera, scene, _ref;
-    _ref = init_camera(width, height), camera = _ref[0], camera_controls = _ref[1];
+    var camera, scene;
+    camera = init_camera(width, height);
     scene = init_scene();
     init_lights(scene);
-    init_cube(scene);
+    init_geometry(scene).done(function(mesh) {
+      return shape = mesh;
+    });
     particle_system = init_particles(scene);
     return [scene, camera];
   };
@@ -236,7 +287,9 @@
   animate = function() {
     requestAnimationFrame(animate);
     update_particles();
-    camera_controls.update();
+    if (shape) {
+      shape.rotation.y += (targetRotation - shape.rotation.y) * 0.05;
+    }
     renderer.clear();
     composer.render(0.1);
     return stats.update();
