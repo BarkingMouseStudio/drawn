@@ -20,7 +20,7 @@
     material = new THREE.ParticleBasicMaterial({
       color: 0x000000,
       size: 20,
-      map: THREE.ImageUtils.loadTexture('images/ash.png'),
+      map: THREE.ImageUtils.loadTexture('../images/ash.png'),
       blending: THREE.NormalBlending,
       transparent: true
     });

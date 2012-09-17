@@ -1,4 +1,4 @@
-D.Particle3D = class Particle3D extends THREE.Vector3
+class D.Particle3D extends THREE.Vector3
   @drag: 0.00015
   @gravity: new THREE.Vector3(0, -9.8, 0)
 

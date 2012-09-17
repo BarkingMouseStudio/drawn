@@ -1,9 +1,8 @@
 (function() {
-  var Particle3D,
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
-  D.Particle3D = Particle3D = (function(_super) {
+  D.Particle3D = (function(_super) {
 
     __extends(Particle3D, _super);
 
