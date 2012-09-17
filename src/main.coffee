@@ -1,102 +1,15 @@
+# Main flow: 
+# * Initialize the foreground and background scenes
 document.onselectstart = -> false
-
-mouse_down = false
-targetRotation = 0
-targetRotationOnMouseDown = 0
-mouseX = 0
-mouseXOnMouseDown = 0
-
-document.addEventListener 'mousedown', (e) ->
-  e.preventDefault()
-  mouse_down = true
-  mouseXOnMouseDown = event.clientX - half_width
-  targetRotationOnMouseDown = targetRotation
-, false
-
-document.addEventListener 'mousemove', (e) ->
-  unless mouse_down
-    return
-
-  mouseX = event.clientX - half_width
-  targetRotation = targetRotationOnMouseDown + (mouseX - mouseXOnMouseDown) * 0.02
-, false
-
-document.addEventListener 'mouseup', (e) ->
-  e.preventDefault()
-  mouse_down = false
-, false
-
-shape = null
-
-particle_bounds = 500
-gravity = new THREE.Vector3(0, -9.8, 0)
-drag = 0.00015
-
-class Particle3D extends THREE.Vector3
-  constructor: ->
-    @mass = random(0, 1)
-    @set(random(-particle_bounds, particle_bounds),
-         random(-particle_bounds, particle_bounds),
-         random(-particle_bounds, particle_bounds))
-    @acceleration = new THREE.Vector3(0, 0, 0)
-    @velocity = new THREE.Vector3(random(), random(), random()) 
-
-  update: ->
-    if @x < -particle_bounds
-      @x = particle_bounds
-    else if @x > particle_bounds
-      @x = -particle_bounds
-
-    if @y < -particle_bounds
-      @y = particle_bounds
-    else if @y > particle_bounds
-      @y = -particle_bounds
-
-    if @z < -particle_bounds
-      @z = particle_bounds
-    else if @z > particle_bounds
-      @z = -particle_bounds
-
-    @acceleration.multiplyScalar(0)
-    @acceleration.addSelf(gravity)
-    @acceleration.multiplyScalar(@mass)
-    @acceleration.multiplyScalar(drag)
-
-    @velocity.addSelf(@acceleration)
-
-    @addSelf(@velocity)
-
-random = (min=-1, max=1) ->
-  return Math.random() * (max - min) + min
-
-random_int = (min, max) ->
-  return Math.floor(random(min, max))
-
-bind = (val, fn) -> fn(val)
 
 width = window.innerWidth
 height = window.innerHeight
 
-half_width = width / 2
-half_height = height / 2
+halfWidth = width / 2
+halfHeight = height / 2
 
-particle_system = null
-
-init_particle = (particle) ->
-  [px, py, pz] = [random(-particle_bounds, particle_bounds),
-                  random(-particle_bounds, particle_bounds),
-                  random(-particle_bounds, particle_bounds)]
-  [ax, ay, az] = [0, 0, 0]
-  [vx, vy, vz] = [random(), random(), random()]
-
-  particle.set(px, py, pz)
-  particle.acceleration.set(ax, ay, az)
-  particle.velocity.set(vx, vy, vz)
-  particle.mass = random(0, 1)
-  return particle
-
-init_particles = (scene) ->
-  particle_count = 100
+initParticles = (scene) ->
+  particleCount = 100
   particles = new THREE.Geometry()
 
   material = new THREE.ParticleBasicMaterial
@@ -106,147 +19,214 @@ init_particles = (scene) ->
     blending: THREE.NormalBlending
     transparent: true
 
-  for i in [0..particle_count]
-    particles.vertices.push(new Particle3D())
+  for i in [0..particleCount]
+    particles.vertices.push(new D.Particle3D())
 
-  particle_system = new THREE.ParticleSystem(particles, material)
-  particle_system.dynamic = true
-  particle_system.sortParticles = true
-  scene.add(particle_system)
-  return particle_system
+  particleSystem = new THREE.ParticleSystem(particles, material)
+  particleSystem.dynamic = true
+  particleSystem.sortParticles = true
+  scene.add(particleSystem)
+  return particleSystem
 
-loadGeometry = (url) ->
-  deferred = new Deferred()
-  loader = new THREE.GeometryLoader()
-  loader.addEventListener 'error', (event) ->
-    deferred.reject(new Error(event.message))
-  loader.addEventListener 'load', (event) ->
-    deferred.resolve(event.content)
-  loader.load(url)
-  return deferred.promise()
+updateParticles = ->
+  particleSystemGeometry = particleSystem.geometry
+  particles = particleSystemGeometry.vertices
+  particleCount = particles.length
 
-update_particles = ->
-  particle_system_geometry = particle_system.geometry
-  particles = particle_system_geometry.vertices
-  p_count = particles.length
+  while particleCount--
+    particles[particleCount].update()
 
-  while p_count--
-    particles[p_count].update()
+  particleSystemGeometry.verticesNeedUpdate = true
 
-  particle_system_geometry.verticesNeedUpdate = true
-
-init_stats = ->
+initStats = ->
   stats = new Stats()
   document.body.appendChild(stats.domElement)
   return stats
 
-init_camera = (width, height) ->
-  view_angle = 45
-  aspect_ratio = width / height
+initCamera = (width, height) ->
+  viewAngle = 45
+  aspectRatio = width / height
   near = 1
   far = 10000
 
-  camera = new THREE.PerspectiveCamera(view_angle, aspect_ratio, near, far)
-  camera.position.z = 300
+  scale = 0.4
+  scaledHalfWidth = halfWidth * scale
+  scaledHalfHeight = halfHeight * scale
+
+  # camera = new THREE.OrthographicCamera(-scaledHalfWidth, scaledHalfWidth, scaledHalfHeight, -scaledHalfHeight, near, far)
+  camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, near, far)
+  camera.position.z = 1000
   return camera
 
-init_lights = (scene) ->
-  ambient_light = new THREE.AmbientLight(0x222222)
-  scene.add(ambient_light)
+initLights = (scene) ->
+  ambientLight = new THREE.AmbientLight(0x222222)
+  scene.add(ambientLight)
 
-  point_light = new THREE.PointLight(0xffffff, 1, 500)
-  point_light.position.set(250, 250, 250)
-  scene.add(point_light)
+  pointLight = new THREE.PointLight(0xffffff, 1, 500)
+  pointLight.position.set(250, 250, 250)
+  scene.add(pointLight)
 
-init_scene = ->
-  scene = new THREE.Scene()
-  scene.fog = new THREE.FogExp2(0xffffff, 0.002)
-  return scene
-
-init_geometry = (scene) ->
-  material = new THREE.MeshLambertMaterial(color: 0x888888)
-
-  return loadGeometry('models/sleeping_woman.js').pipe (geometry) ->
-    mesh = new THREE.Mesh(geometry, material)
-    mesh.scale.set(5, 5, 5)
-    # mesh.rotation.set(random(), random(), random())
-    scene.add(mesh)
-    return mesh
-
-init_renderer = (width, height) ->
+initRenderer = (width, height) ->
   renderer = new THREE.WebGLRenderer()
   renderer.setSize(width, height)
+
+  # Set the color to paint the background when its cleaered by the renderer
   renderer.setClearColorHex(0x000000, 1)
+
+  # We call `renderer.clear` manually in the render loop because of the
+  # way the EffectComposer expects its layers to clear
   renderer.autoClear = false
 
+  # Append a canvas element to the body
   document.body.appendChild(renderer.domElement)
 
   return renderer
 
-init_background = ->
-  camera = new THREE.OrthographicCamera(-half_width, half_width, half_height, -half_height, -10000, 10000)
+# Initialize the background image that will be rendered behind the main scene
+initBackground = ->
+  camera = new THREE.OrthographicCamera(-halfWidth, halfWidth, halfHeight, -halfHeight, -10000, 10000)
   camera.position.z = 100
 
+  # NOTE: Since we're using an `OrthographicCamera` the `z` position has no
+  # effect beyond needing the object to be in front of the camera
+
   material = new THREE.MeshBasicMaterial
-    map: THREE.ImageUtils.loadTexture('images/vitruvian.jpg')
+    map: THREE.ImageUtils.loadTexture('images/sleeping_woman.png')
     depthTest: false
 
+  # Scales the image
+  size = 665
+
+  # The aspect ratio
+  aspectRatio = 1230 / 1510
+
   mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material)
-  mesh.position.z = -500
-  mesh.scale.set(2000 * (1385 / 2001), 2000, 1)
+  mesh.position.y = 65
+  mesh.position.z = -1000
+  mesh.scale.set(size * aspectRatio, size, 1)
 
   scene = new THREE.Scene()
   scene.add(mesh)
   return [scene, camera]
 
-init_foreground = ->
-  camera = init_camera(width, height)
-  scene = init_scene()
-  init_lights(scene)
-  init_geometry(scene).done (mesh) -> shape = mesh
-  particle_system = init_particles(scene)
+# Globals that need to be updated in the render loop but are called too deep
+# to be cleanly bubbled up like the stats object
+rotationControls = null
+particleSystem = null
+
+# Async load geometry into a mesh and add it to the scene
+initDeferredMesh = (scene) ->
+  # NOTE: `initDeferredMesh` doesn't return the mesh directly but a `Promise`.
+  # You could use the mesh later like this:
+  # ```
+  # meshPromise = initDeferredMesh(scene)
+  # meshPromise.done (mesh) ->
+  #   console.log('this is the mesh', mesh)
+  # ```
+  return D.loadGeometry('models/sleeping_woman_extruded.js')
+    .pipe (geometry) ->
+      material = new THREE.MeshNormalMaterial()
+      mesh = new THREE.Mesh(geometry, material)
+      mesh.scale.set(18, 18, 18)
+      scene.add(mesh)
+
+      # Initialize the mouse controls for rotating the object
+      rotationControls = new D.RotationControls(mesh)
+
+      return mesh
+
+# Initializes the foreground scene with the shape model
+initForeground = ->
+  camera = initCamera(width, height)
+
+  scene = new THREE.Scene()
+  scene.fog = new THREE.FogExp2(0xffffff, 0.002)
+
+  initLights(scene)
+  initDeferredMesh(scene)
+
+  particleSystem = initParticles(scene)
   return [scene, camera]
 
-init_composer = (renderer) ->
-  render_target = new THREE.WebGLRenderTarget width, height, parameters =
+initComposer = (renderer) ->
+  # Intialize a render target. This is used as a secondary buffer to render
+  # images to before they're finally rendered onto the main `renderer`.
+  renderTarget = new THREE.WebGLRenderTarget width, height, parameters =
     minFilter: THREE.LinearFilter
     magFilter: THREE.LinearFilter
     format: THREE.RGBAFormat
     stencilBuffer: false
 
-  composer = new THREE.EffectComposer(renderer, render_target)
+  # Builds up layers to render to the `renderTarget`
+  effectComposer = new THREE.EffectComposer(renderer, renderTarget)
 
-  [background_scene, ortographic_camera] = init_background()
-  [foreground_scene, perspective_camera] = init_foreground()
+  # Intialize the scenes and cameras for their `RenderPass`
+  [backgroundScene, ortographicCamera] = initBackground()
+  [foregroundScene, perspectiveCamera] = initForeground()
 
-  background_pass = new THREE.RenderPass(background_scene, ortographic_camera)
+  backgroundPass = new THREE.RenderPass(backgroundScene, ortographicCamera)
+  foregroundPass = new THREE.RenderPass(foregroundScene, perspectiveCamera)
 
-  foreground_pass = new THREE.RenderPass(foreground_scene, perspective_camera)
-  foreground_pass.clear = false
+  # We disable clearing on this pass or it would clear the `backgroundPass`
+  # "behind" it. The default is `clear = true` so `backgroundPass` implicitly
+  # clears itself.
+  foregroundPass.clear = false
 
-  screen_pass = new THREE.ShaderPass(THREE.ShaderExtras['screen'])
-  screen_pass.renderToScreen = true
+  # Apparently the `EffectComposer` requires at least one `ShaderPass` to
+  # render anything. There are a bunch of these in THREE.ShaderExtras
+  # including a vinette effect and depth-of-field. `screen` appears to be a
+  # normal render with no effects.
+  screenPass = new THREE.ShaderPass(THREE.ShaderExtras['screen'])
 
-  composer.addPass(background_pass)
-  composer.addPass(foreground_pass)
-  composer.addPass(screen_pass)
+  # All `ShaderPass`'s require `renderToScreen` to do that. Otherwise the
+  # layers "behind" them won't render. I don't know why you would want it to
+  # be `false`.
+  screenPass.renderToScreen = true
 
-  return composer
+  # Add all of the render passes in the order you want them to render (like
+  # Photoshop layers).
+  effectComposer.addPass(backgroundPass)
+  effectComposer.addPass(foregroundPass)
+  effectComposer.addPass(screenPass)
 
-stats = init_stats()
-renderer = init_renderer(width, height)
-composer = init_composer(renderer)
+  return effectComposer
 
-animate = ->
-  requestAnimationFrame(animate)
+# Initialize the built-in Three.js stats monitor in the bottom right corner
+stats = initStats()
 
-  update_particles()
-  if shape
-    shape.rotation.y += (targetRotation - shape.rotation.y) * 0.05
+# Initialize the renderer that is responsible for outputing the final rendered
+# image. Ordinarily we would call `renderer.render()` but the `EffectComposer`
+# does that for us.
+renderer = initRenderer(width, height)
 
+# Initialize the effectComposer which will compose the foreground and background
+# images into a single rendered image
+effectComposer = initComposer(renderer)
+
+# Main render loop passed into `requestAnimationFrame` 
+update = ->
+  # The more efficient equivalent to `setTimeout` (takes into account browser
+  # visibility and pauses render as needed)
+  requestAnimationFrame(update)
+
+  # Update the particles positions
+  updateParticles()
+
+  # Update the rotation of the object the rotation control was given when it 
+  # was initialized (using existential operator because the controls and mesh
+  # the controls are bound to may not exist yet)
+  rotationControls?.update()
+
+  # Clear the renderer so anything translucent in the next rendered frame
+  # does not leave a ghost image
   renderer.clear()
-  composer.render(0.1)
 
+  # Call render on the `effectComposer` which will internally pass its
+  # results to the renderer it was given when the `effectComposer` was
+  # initialized
+  effectComposer.render(0.1)
+
+  # Tell the stats monitor to update
   stats.update()
 
-animate()
+update()
