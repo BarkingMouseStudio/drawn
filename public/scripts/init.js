@@ -4,4 +4,6 @@
     Constants: {}
   };
 
+  Deferred.installInto(Zepto);
+
 }).call(this);

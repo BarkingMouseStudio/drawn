@@ -14,3 +14,9 @@ D.loadGeometry = (url) ->
     deferred.resolve(event.content)
   loader.load(url)
   return deferred.promise()
+
+D.degreesToRadians = (degrees) ->
+  return degrees * (Math.PI / 180)
+
+D.radiansToDegrees = (radians) ->
+  return radians * (180 / Math.PI)

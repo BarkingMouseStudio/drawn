@@ -44,7 +44,7 @@ initStats = ->
   return stats
 
 initCamera = (width, height) ->
-  viewAngle = 45
+  viewAngle = 5 # fov
   aspectRatio = width / height
   near = 1
   far = 10000
@@ -55,7 +55,7 @@ initCamera = (width, height) ->
 
   # camera = new THREE.OrthographicCamera(-scaledHalfWidth, scaledHalfWidth, scaledHalfHeight, -scaledHalfHeight, near, far)
   camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, near, far)
-  camera.position.z = 1000
+  camera.position.z = 540
   return camera
 
 initLights = (scene) ->
@@ -127,7 +127,6 @@ initDeferredMesh = (scene) ->
     .pipe (geometry) ->
       material = new THREE.MeshNormalMaterial()
       mesh = new THREE.Mesh(geometry, material)
-      mesh.scale.set(18, 18, 18)
       scene.add(mesh)
 
       # Initialize the mouse controls for rotating the object

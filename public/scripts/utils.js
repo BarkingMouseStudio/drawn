@@ -30,4 +30,12 @@
     return deferred.promise();
   };
 
+  D.degreesToRadians = function(degrees) {
+    return degrees * (Math.PI / 180);
+  };
+
+  D.radiansToDegrees = function(radians) {
+    return radians * (180 / Math.PI);
+  };
+
 }).call(this);

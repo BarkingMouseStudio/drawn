@@ -1,17 +1,17 @@
 class D.RotationControls
-  mouseDown: false
+  isMouseDown: false
 
   deceleration: 0.05
   scale: 0.02
 
-  rotationX: 0
-  rotationY: 0
   initialRotationX: 0
   initialRotationY: 0
   mouseX: 0
   mouseY: 0
   initialMouseX: 0
   initialMouseY: 0
+  rotationX: 0
+  rotationY: 0
 
   constructor: (@object, @el=document) ->
     @halfWidth = window.innerWidth / 2
@@ -21,17 +21,17 @@ class D.RotationControls
     @el.addEventListener('mousemove', @onMouseMove, false)
     @el.addEventListener('mouseup', @onMouseUp, false)
 
-  onMouseDown: (e) ->
+  onMouseDown: (e) =>
     e.preventDefault()
-    @mouseDown = true
+    @isMouseDown = true
 
     @initialMouseX = e.clientX - @halfWidth
     @initialMouseY = e.clientY - @halfHeight
     @initialRotationX = @rotationX
     @initialRotationY = @rotationY
 
-  onMouseMove: (e) ->
-    return unless @mouseDown
+  onMouseMove: (e) =>
+    return unless @isMouseDown
 
     @mouseX = e.clientX - @halfWidth
     @mouseY = e.clientY - @halfWidth
@@ -39,10 +39,10 @@ class D.RotationControls
     @rotationX = @initialRotationX + (@mouseX - @initialMouseX) * @scale
     @rotationY = @initialRotationY + (@mouseY - @initialMouseY) * @scale
 
-  onMouseUp: (e) ->
+  onMouseUp: (e) =>
     e.preventDefault()
-    @mouseDown = false
+    @isMouseDown = false
 
   update: ->
-    @object.rotation.y += (@rotationX - @object.rotation.y) * @deceleration
     @object.rotation.x += (@rotationY - @object.rotation.x) * @deceleration
+    @object.rotation.y += (@rotationX - @object.rotation.y) * @deceleration

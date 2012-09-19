@@ -54,7 +54,7 @@
 
   initCamera = function(width, height) {
     var aspectRatio, camera, far, near, scale, scaledHalfHeight, scaledHalfWidth, viewAngle;
-    viewAngle = 45;
+    viewAngle = 5;
     aspectRatio = width / height;
     near = 1;
     far = 10000;
@@ -62,7 +62,7 @@
     scaledHalfWidth = halfWidth * scale;
     scaledHalfHeight = halfHeight * scale;
     camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, near, far);
-    camera.position.z = 1000;
+    camera.position.z = 540;
     return camera;
   };
 
@@ -113,7 +113,6 @@
       var material, mesh;
       material = new THREE.MeshNormalMaterial();
       mesh = new THREE.Mesh(geometry, material);
-      mesh.scale.set(18, 18, 18);
       scene.add(mesh);
       rotationControls = new D.RotationControls(mesh);
       return mesh;
