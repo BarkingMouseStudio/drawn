@@ -1,7 +1,7 @@
 (function() {
 
   window.D = {
-    Constants: {}
+    TWO_PI: Math.PI * 2
   };
 
   Deferred.installInto(Zepto);

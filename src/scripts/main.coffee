@@ -44,18 +44,13 @@ initStats = ->
   return stats
 
 initCamera = (width, height) ->
-  viewAngle = 5 # fov
+  viewAngle = 10 # fov
   aspectRatio = width / height
-  near = 1
-  far = 10000
 
-  scale = 0.4
-  scaledHalfWidth = halfWidth * scale
-  scaledHalfHeight = halfHeight * scale
+  # console.warn(365 = width / height)
 
-  # camera = new THREE.OrthographicCamera(-scaledHalfWidth, scaledHalfWidth, scaledHalfHeight, -scaledHalfHeight, near, far)
-  camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, near, far)
-  camera.position.z = 540
+  camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, 1, 10000)
+  camera.position.z = 365
   return camera
 
 initLights = (scene) ->
@@ -95,13 +90,13 @@ initBackground = ->
     depthTest: false
 
   # Scales the image
-  size = 665
+  size = 482
 
   # The aspect ratio
   aspectRatio = 1230 / 1510
 
   mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material)
-  mesh.position.y = 65
+  mesh.position.y = 45
   mesh.position.z = -1000
   mesh.scale.set(size * aspectRatio, size, 1)
 
@@ -127,6 +122,7 @@ initDeferredMesh = (scene) ->
     .pipe (geometry) ->
       material = new THREE.MeshNormalMaterial()
       mesh = new THREE.Mesh(geometry, material)
+      mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0)
       scene.add(mesh)
 
       # Initialize the mouse controls for rotating the object
