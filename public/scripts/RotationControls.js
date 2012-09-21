@@ -14,6 +14,16 @@
 
     RotationControls.prototype.isMouseDown = false;
 
+    RotationControls.prototype.scale = 0.5;
+
+    RotationControls.prototype.drag = 0.9;
+
+    RotationControls.prototype.disabled = false;
+
+    RotationControls.prototype.maxSpeed = 0.2;
+
+    RotationControls.prototype.solutionThreshold = 2;
+
     RotationControls.prototype.mouseX = 0;
 
     RotationControls.prototype.mouseY = 0;
@@ -66,23 +76,34 @@
     };
 
     RotationControls.prototype.update = function() {
-      var drag, pX, pY, scale, solutionThreshold, x, y, _ref;
-      this.object.rotationAcceleration.multiplyScalar(scale = 0.5);
+      var accuracy, speed, tooFast, x, y, _ref;
+      if (this.disabled) {
+        return;
+      }
+      this.object.rotationAcceleration.multiplyScalar(this.scale);
       this.object.rotationVelocity.addSelf(this.object.rotationAcceleration);
       this.object.rotation.addSelf(this.object.rotationVelocity);
-      this.object.rotationVelocity.multiplyScalar(drag = 0.9);
+      this.object.rotationVelocity.multiplyScalar(this.drag);
       _ref = this.object.rotation, x = _ref.x, y = _ref.y;
-      if (x > D.TWO_PI || x < -D.TWO_PI) {
-        this.object.rotation.x = x = 0;
+      if (x > D.TWO_PI) {
+        this.object.rotation.x -= (x / D.TWO_PI) * D.TWO_PI;
+      } else if (x < -D.TWO_PI) {
+        this.object.rotation.x -= (x / D.TWO_PI) * D.TWO_PI;
       }
-      if (y > D.TWO_PI || y < -D.TWO_PI) {
-        this.object.rotation.y = y = 0;
+      if (y > D.TWO_PI) {
+        this.object.rotation.y -= (y / D.TWO_PI) * D.TWO_PI;
+      } else if (y < -D.TWO_PI) {
+        this.object.rotation.y -= (y / D.TWO_PI) * D.TWO_PI;
       }
-      solutionThreshold = 5;
-      pX = (Math.abs(x) / Math.PI) * 100;
-      pY = (Math.abs(y) / Math.PI) * 100;
-      if (pX + pY < solutionThreshold) {
-        return console.warn('SOLUTION', pX, pY);
+      speed = this.object.rotationVelocity.lengthSq();
+      tooFast = speed > this.maxSpeed;
+      accuracy = (this.object.rotation.length() / D.TWO_PI) * 100;
+      if (tooFast) {
+        return this.object.rotationAcceleration.addSelf(this.object.rotationVelocity.clone().negate());
+      } else if (accuracy < this.solutionThreshold) {
+        console.warn('SOLUTION', accuracy, speed);
+        this.object.rotation.set(0, 0, 0);
+        return this.disabled = true;
       }
       /*
           if @rotationX > twoPI

@@ -7,6 +7,13 @@ halfHeight = height / 2
 class D.RotationControls
   isMouseDown: false
 
+  scale: 0.5
+  drag: 0.9
+
+  disabled: false
+  maxSpeed: 0.2
+  solutionThreshold: 2
+
   mouseX: 0
   mouseY: 0
   initMouseX: 0
@@ -49,25 +56,36 @@ class D.RotationControls
     @isMouseDown = false
 
   update: ->
-    @object.rotationAcceleration.multiplyScalar(scale = 0.5)
+    return if @disabled
+
+    @object.rotationAcceleration.multiplyScalar(@scale)
     @object.rotationVelocity.addSelf(@object.rotationAcceleration)
     @object.rotation.addSelf(@object.rotationVelocity)
-    @object.rotationVelocity.multiplyScalar(drag = 0.9)
+    @object.rotationVelocity.multiplyScalar(@drag)
 
     { x, y } = @object.rotation
 
-    if x > D.TWO_PI or x < -D.TWO_PI
-      @object.rotation.x = x = 0
+    if x > D.TWO_PI
+      @object.rotation.x -= (x / D.TWO_PI) * D.TWO_PI
+    else if x < -D.TWO_PI
+      @object.rotation.x -= (x / D.TWO_PI) * D.TWO_PI
 
-    if y > D.TWO_PI or y < -D.TWO_PI
-      @object.rotation.y = y = 0
+    if y > D.TWO_PI
+      @object.rotation.y -= (y / D.TWO_PI) * D.TWO_PI
+    else if y < -D.TWO_PI
+      @object.rotation.y -= (y / D.TWO_PI) * D.TWO_PI
 
-    # Should be a percentage of the full range
-    solutionThreshold = 5
-    pX = (Math.abs(x) / Math.PI) * 100
-    pY = (Math.abs(y) / Math.PI) * 100
-    if pX + pY < solutionThreshold
-      console.warn 'SOLUTION', pX, pY
+    speed = @object.rotationVelocity.lengthSq()
+    tooFast = speed > @maxSpeed
+
+    accuracy = (@object.rotation.length() / D.TWO_PI) * 100
+
+    if tooFast
+      @object.rotationAcceleration.addSelf(@object.rotationVelocity.clone().negate())
+    else if accuracy < @solutionThreshold
+      console.warn 'SOLUTION', accuracy, speed
+      @object.rotation.set(0, 0, 0)
+      @disabled = true
 
     ###
     if @rotationX > twoPI
