@@ -7,6 +7,8 @@ class D.Particle3D extends THREE.Vector3
   mass: 1
 
   constructor: ->
+    super
+
     @acceleration = new THREE.Vector3(0, 0, 0)
     @velocity = new THREE.Vector3(0, 0, 0) 
 

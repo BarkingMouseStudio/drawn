@@ -11,52 +11,56 @@
 
   halfHeight = height / 2;
 
-  D.RotationControls = (function(_super) {
+  D.RotationController = (function(_super) {
 
-    __extends(RotationControls, _super);
+    __extends(RotationController, _super);
 
-    RotationControls.prototype.isMouseDown = false;
+    RotationController.prototype.isMouseDown = false;
 
-    RotationControls.prototype.scale = 0.5;
+    RotationController.prototype.scale = 0.5;
 
-    RotationControls.prototype.drag = 0.9;
+    RotationController.prototype.drag = 0.9;
 
-    RotationControls.prototype.disabled = false;
+    RotationController.prototype.disabled = false;
 
-    RotationControls.prototype.maxSpeed = 0.2;
+    RotationController.prototype.maxSpeed = 0.2;
 
-    RotationControls.prototype.solutionThreshold = 2;
+    RotationController.prototype.solutionThreshold = 2;
 
-    RotationControls.prototype.mouseX = 0;
+    RotationController.prototype.mouseX = 0;
 
-    RotationControls.prototype.mouseY = 0;
+    RotationController.prototype.mouseY = 0;
 
-    RotationControls.prototype.initMouseX = 0;
+    RotationController.prototype.initMouseX = 0;
 
-    RotationControls.prototype.initMouseY = 0;
+    RotationController.prototype.initMouseY = 0;
 
-    RotationControls.prototype.events = {
+    RotationController.prototype.events = {
       'mousedown': 'onMouseDown',
       'mousemove': 'onMouseMove',
       'mouseup': 'onMouseUp'
     };
 
-    function RotationControls() {
-      RotationControls.__super__.constructor.apply(this, arguments);
+    function RotationController() {
+      var _this = this;
+      RotationController.__super__.constructor.apply(this, arguments);
       this.object = this.options.object;
-      this.renderer = this.options.renderer;
+      this.renderController = this.options.renderController;
+      this.renderController.on('beforeRender', function() {
+        return _this.update();
+      });
       this.rotationAcceleration = new THREE.Vector3();
       this.rotationVelocity = new THREE.Vector3();
     }
 
-    RotationControls.prototype.onMouseDown = function(e) {
+    RotationController.prototype.onMouseDown = function(e) {
       e.preventDefault();
       this.isMouseDown = true;
       this.initMouseX = e.clientX - halfWidth;
       return this.initMouseY = e.clientY - halfHeight;
     };
 
-    RotationControls.prototype.onMouseMove = function(e) {
+    RotationController.prototype.onMouseMove = function(e) {
       if (!this.isMouseDown) {
         return;
       }
@@ -71,12 +75,12 @@
       return this.initMouseY = this.mouseY;
     };
 
-    RotationControls.prototype.onMouseUp = function(e) {
+    RotationController.prototype.onMouseUp = function(e) {
       e.preventDefault();
       return this.isMouseDown = false;
     };
 
-    RotationControls.prototype.update = function() {
+    RotationController.prototype.update = function() {
       var accuracy, speed, tooFast, x, y, _ref;
       if (this.disabled) {
         return;
@@ -108,7 +112,7 @@
       }
     };
 
-    return RotationControls;
+    return RotationController;
 
   })(Backbone.View);
 

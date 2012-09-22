@@ -17,6 +17,7 @@
     Particle3D.prototype.mass = 1;
 
     function Particle3D() {
+      Particle3D.__super__.constructor.apply(this, arguments);
       this.acceleration = new THREE.Vector3(0, 0, 0);
       this.velocity = new THREE.Vector3(0, 0, 0);
     }

@@ -10,12 +10,6 @@
     return Math.random() * (max - min) + min;
   };
 
-  D.bind = function(fn) {
-    return function(val) {
-      return fn(val);
-    };
-  };
-
   D.loadGeometry = function(url) {
     var deferred, loader;
     deferred = new Deferred();
