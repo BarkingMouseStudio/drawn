@@ -86,6 +86,6 @@ class D.RotationController extends Backbone.View
     if tooFast
       @rotationAcceleration.addSelf(@rotationVelocity.clone().negate())
     else if accuracy < @solutionThreshold
-      console.warn 'SOLUTION', accuracy, speed
+      console.warn 'SOLUTION', 'acc', accuracy, 'speed', speed
       @object.rotation.set(0, 0, 0)
       @disabled = true

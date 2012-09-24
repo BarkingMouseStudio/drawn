@@ -9,6 +9,11 @@ class D.RenderController extends Backbone.View
 
     @on 'render', -> @renderer.clear()
 
+    $(window).on 'resize', @onResized
+
+  onResized: ->
+    @renderer.setSize(window.innerWidth, window.innerHeight)
+
   render: =>
     @trigger('beforeRender')
     @trigger('render')

@@ -1,7 +1,12 @@
 (function() {
-  var effectController, renderController, statsController;
+  var effectController, particlesController, renderController, statsController;
 
   renderController = new D.RenderController({
+    el: document.body
+  });
+
+  particlesController = new D.ParticlesController({
+    renderController: renderController,
     el: document.body
   });
 

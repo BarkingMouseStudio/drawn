@@ -106,7 +106,7 @@
       if (tooFast) {
         return this.rotationAcceleration.addSelf(this.rotationVelocity.clone().negate());
       } else if (accuracy < this.solutionThreshold) {
-        console.warn('SOLUTION', accuracy, speed);
+        console.warn('SOLUTION', 'acc', accuracy, 'speed', speed);
         this.object.rotation.set(0, 0, 0);
         return this.disabled = true;
       }

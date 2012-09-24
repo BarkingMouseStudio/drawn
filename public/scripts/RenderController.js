@@ -18,7 +18,12 @@
       this.on('render', function() {
         return this.renderer.clear();
       });
+      $(window).on('resize', this.onResized);
     }
+
+    RenderController.prototype.onResized = function() {
+      return this.renderer.setSize(window.innerWidth, window.innerHeight);
+    };
 
     RenderController.prototype.render = function() {
       this.trigger('beforeRender');
