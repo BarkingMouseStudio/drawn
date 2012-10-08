@@ -3,8 +3,22 @@ class D.EffectController extends Backbone.View
     super
     @renderController = @options.renderController
 
-    initBackground = (halfWidth, halfHeight) ->
-      camera = new THREE.OrthographicCamera(-halfWidth, halfWidth, halfHeight, -halfHeight, 1, 100)
+    width = window.innerWidth
+    height = window.innerHeight
+
+    bluriness1 = maxBluriness1 = 16
+    bluriness2 = maxBluriness2 = 4
+    hBlurPass1 = null
+    vBlurPass1 = null
+    hBlurPass2 = null
+    vBlurPass2 = null
+
+    rotationControls = null
+
+    initBackground = (width, height) ->
+      halfWidth = width / 2
+      halfHeight = height / 2
+      camera = new THREE.OrthographicCamera(-halfWidth, halfWidth, halfHeight, -halfHeight, -10000, 10000)
       camera.position.z = 100
 
       material = new THREE.MeshBasicMaterial
@@ -39,10 +53,14 @@ class D.EffectController extends Backbone.View
       pointLight.position.set(250, 250, 250)
       scene.add(pointLight)
 
+      particlesController = new D.ParticlesController(scene: scene, renderController: @renderController)
+
       D.loadGeometry('models/sleeping_woman_extruded.js')
         .done (geometry) =>
+          scale = 1.18
           material = new THREE.MeshNormalMaterial()
           mesh = new THREE.Mesh(geometry, material)
+          mesh.scale.set(scale, scale, scale)
           mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0)
           scene.add(mesh)
           rotationControls = new D.RotationController(el: @el, object: mesh, renderController: @renderController)
@@ -50,62 +68,67 @@ class D.EffectController extends Backbone.View
       return [scene, camera]
 
     initComposers = (renderer, width, height) ->
-      renderTarget = new THREE.WebGLRenderTarget width, height, parameters =
+      parameters =
         minFilter: THREE.LinearFilter
         magFilter: THREE.LinearFilter
         format: THREE.RGBAFormat
         stencilBuffer: true
 
-      effectComposer = new THREE.EffectComposer(renderer, renderTarget)
+      backgroundTarget = new THREE.WebGLRenderTarget(width, height, parameters)
+      backgroundComposer = new THREE.EffectComposer(renderer, backgroundTarget)
 
-      [backgroundScene, ortographicCamera] = initBackground(width / 2, height / 2)
+      foregroundTarget = new THREE.WebGLRenderTarget(width, height, parameters)
+      foregroundComposer = new THREE.EffectComposer(renderer, foregroundTarget)
+
+      [backgroundScene, ortographicCamera] = initBackground(width, height)
       [foregroundScene, perspectiveCamera] = initForeground(width, height)
 
-      backgroundPass = new THREE.RenderPass(backgroundScene, ortographicCamera)
-      foregroundPass = new THREE.RenderPass(foregroundScene, perspectiveCamera)
-      foregroundPass.clear = false
+      renderBackground = new THREE.RenderPass(backgroundScene, ortographicCamera)
 
-      foregroundMaskPass = new THREE.MaskPass(foregroundScene, perspectiveCamera)
-      foregroundMaskPass.inverse = true
+      hBlurPass1 = new THREE.ShaderPass(THREE.ShaderExtras.horizontalBlur)
+      vBlurPass1 = new THREE.ShaderPass(THREE.ShaderExtras.verticalBlur)
 
-      clearMaskPass = new THREE.ClearMaskPass()
+      hBlurPass1.uniforms.h.value = bluriness1 / width
+      vBlurPass1.uniforms.v.value = bluriness1 / height
 
-      hBlurPass1 = new THREE.ShaderPass(THREE.ShaderExtras['horizontalBlur'])
-      vBlurPass1 = new THREE.ShaderPass(THREE.ShaderExtras['verticalBlur'])
+      hBlurPass2 = new THREE.ShaderPass(THREE.ShaderExtras.horizontalBlur)
+      vBlurPass2 = new THREE.ShaderPass(THREE.ShaderExtras.verticalBlur)
+      vBlurPass2.renderToScreen = true
 
-      bluriness = 16
-      hBlurPass1.uniforms['h'].value = bluriness / width
-      vBlurPass1.uniforms['v'].value = bluriness / height
+      hBlurPass2.uniforms.h.value = bluriness2 / width
+      vBlurPass2.uniforms.v.value = bluriness2 / height
 
-      hBlurPass2 = new THREE.ShaderPass(THREE.ShaderExtras['horizontalBlur'])
-      vBlurPass2 = new THREE.ShaderPass(THREE.ShaderExtras['verticalBlur'])
+      renderForeground = new THREE.RenderPass(foregroundScene, perspectiveCamera)
+      renderForeground.clear = false
 
-      bluriness = 4
-      hBlurPass2.uniforms['h'].value = bluriness / width
-      vBlurPass2.uniforms['v'].value = bluriness / height
-
-      vignettePass = new THREE.ShaderPass(THREE.ShaderExtras['vignette'])
-      vignettePass.uniforms['offset'].value = 0.8
-      vignettePass.uniforms['darkness'].value = 2
+      vignettePass = new THREE.ShaderPass(THREE.ShaderExtras.vignette)
+      vignettePass.uniforms.offset.value = 0.8
+      vignettePass.uniforms.darkness.value = 2
       vignettePass.renderToScreen = true
 
-      screenPass = new THREE.ShaderPass(THREE.ShaderExtras['screen'])
-      screenPass.renderToScreen = true
+      backgroundComposer.addPass(renderBackground)
+      backgroundComposer.addPass(hBlurPass1)
+      backgroundComposer.addPass(vBlurPass1)
+      backgroundComposer.addPass(hBlurPass2)
+      backgroundComposer.addPass(vBlurPass2)
 
-      effectComposer.addPass(backgroundPass)
-      effectComposer.addPass(foregroundPass)
-      effectComposer.addPass(screenPass)
-      # effectComposer.addPass(foregroundMaskPass)
-      # effectComposer.addPass(hBlurPass1)
-      # effectComposer.addPass(vBlurPass1)
-      # effectComposer.addPass(hBlurPass2)
-      # effectComposer.addPass(vBlurPass2)
-      # effectComposer.addPass(clearMaskPass)
-      # effectComposer.addPass(vignettePass)
+      foregroundComposer.addPass(renderForeground)
+      foregroundComposer.addPass(vignettePass)
 
-      return effectComposer
+      return [backgroundComposer, foregroundComposer]
 
-    effectComposer = initComposers(@renderController.renderer, window.innerWidth, window.innerHeight)
+    [backgroundComposer, foregroundComposer] = initComposers(@renderController.renderer, width, height)
+
+    @renderController.on 'beforeRender', ->
+      return unless rotationControls
+      accuracy = rotationControls.accuracy
+      bluriness1 = maxBluriness1 * accuracy
+      bluriness2 = maxBluriness2 * accuracy
+      hBlurPass1.uniforms.h.value = bluriness1 / width
+      vBlurPass1.uniforms.v.value = bluriness1 / height
+      hBlurPass2.uniforms.h.value = bluriness2 / width
+      vBlurPass2.uniforms.v.value = bluriness2 / height
 
     @renderController.on 'afterRender', ->
-      effectComposer.render(0.1)
+      backgroundComposer.render()
+      foregroundComposer.render()

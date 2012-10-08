@@ -12,12 +12,14 @@ class D.RotationController extends Backbone.View
 
   disabled: false
   maxSpeed: 0.2
-  solutionThreshold: 2
+  solutionThreshold: 0.02
 
   mouseX: 0
   mouseY: 0
   initMouseX: 0
   initMouseY: 0
+
+  accuracy: 0
 
   events:
     'mousedown': 'onMouseDown'
@@ -30,8 +32,7 @@ class D.RotationController extends Backbone.View
     @object = @options.object
 
     @renderController = @options.renderController
-    @renderController.on 'beforeRender', =>
-      @update()
+    @renderController.on 'beforeRender', @update
 
     @rotationAcceleration = new THREE.Vector3()
     @rotationVelocity = new THREE.Vector3()
@@ -58,7 +59,7 @@ class D.RotationController extends Backbone.View
     e.preventDefault()
     @isMouseDown = false
 
-  update: ->
+  update: =>
     return if @disabled
 
     @rotationAcceleration.multiplyScalar(@scale)
@@ -81,11 +82,11 @@ class D.RotationController extends Backbone.View
     speed = @rotationVelocity.lengthSq()
     tooFast = speed > @maxSpeed
 
-    accuracy = (@object.rotation.length() / D.TWO_PI) * 100
+    @accuracy = (@object.rotation.length() / D.TWO_PI)
 
     if tooFast
       @rotationAcceleration.addSelf(@rotationVelocity.clone().negate())
-    else if accuracy < @solutionThreshold
-      console.warn 'SOLUTION', 'acc', accuracy, 'speed', speed
+    else if @accuracy < @solutionThreshold
+      console.warn 'SOLUTION', 'acc', @accuracy, 'speed', speed
       @object.rotation.set(0, 0, 0)
       @disabled = true

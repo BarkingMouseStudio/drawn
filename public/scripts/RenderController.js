@@ -9,6 +9,8 @@
 
     function RenderController() {
       this.render = __bind(this.render, this);
+
+      this.onResized = __bind(this.onResized, this);
       RenderController.__super__.constructor.apply(this, arguments);
       this.renderer = new THREE.WebGLRenderer();
       this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -22,7 +24,8 @@
     }
 
     RenderController.prototype.onResized = function() {
-      return this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      return this.trigger('resize');
     };
 
     RenderController.prototype.render = function() {

@@ -1,5 +1,6 @@
 (function() {
   var halfHeight, halfWidth, height, width,
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -25,7 +26,7 @@
 
     RotationController.prototype.maxSpeed = 0.2;
 
-    RotationController.prototype.solutionThreshold = 2;
+    RotationController.prototype.solutionThreshold = 0.02;
 
     RotationController.prototype.mouseX = 0;
 
@@ -35,6 +36,8 @@
 
     RotationController.prototype.initMouseY = 0;
 
+    RotationController.prototype.accuracy = 0;
+
     RotationController.prototype.events = {
       'mousedown': 'onMouseDown',
       'mousemove': 'onMouseMove',
@@ -42,13 +45,11 @@
     };
 
     function RotationController() {
-      var _this = this;
+      this.update = __bind(this.update, this);
       RotationController.__super__.constructor.apply(this, arguments);
       this.object = this.options.object;
       this.renderController = this.options.renderController;
-      this.renderController.on('beforeRender', function() {
-        return _this.update();
-      });
+      this.renderController.on('beforeRender', this.update);
       this.rotationAcceleration = new THREE.Vector3();
       this.rotationVelocity = new THREE.Vector3();
     }
@@ -81,7 +82,7 @@
     };
 
     RotationController.prototype.update = function() {
-      var accuracy, speed, tooFast, x, y, _ref;
+      var speed, tooFast, x, y, _ref;
       if (this.disabled) {
         return;
       }
@@ -102,11 +103,11 @@
       }
       speed = this.rotationVelocity.lengthSq();
       tooFast = speed > this.maxSpeed;
-      accuracy = (this.object.rotation.length() / D.TWO_PI) * 100;
+      this.accuracy = this.object.rotation.length() / D.TWO_PI;
       if (tooFast) {
         return this.rotationAcceleration.addSelf(this.rotationVelocity.clone().negate());
-      } else if (accuracy < this.solutionThreshold) {
-        console.warn('SOLUTION', 'acc', accuracy, 'speed', speed);
+      } else if (this.accuracy < this.solutionThreshold) {
+        console.warn('SOLUTION', 'acc', this.accuracy, 'speed', speed);
         this.object.rotation.set(0, 0, 0);
         return this.disabled = true;
       }

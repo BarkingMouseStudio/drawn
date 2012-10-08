@@ -5,14 +5,16 @@ class D.RenderController extends Backbone.View
     @renderer.setSize(window.innerWidth, window.innerHeight)
     @renderer.setClearColorHex(0x444444, 1)
     @renderer.autoClear = false
+
     @el.appendChild(@renderer.domElement)
 
     @on 'render', -> @renderer.clear()
 
     $(window).on 'resize', @onResized
 
-  onResized: ->
+  onResized: =>
     @renderer.setSize(window.innerWidth, window.innerHeight)
+    @trigger 'resize'
 
   render: =>
     @trigger('beforeRender')
