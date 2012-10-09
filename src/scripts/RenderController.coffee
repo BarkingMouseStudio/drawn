@@ -8,16 +8,21 @@ class D.RenderController extends Backbone.View
 
     @el.appendChild(@renderer.domElement)
 
-    @on 'render', -> @renderer.clear()
+    $(window).on('resize', @onResized)
 
-    $(window).on 'resize', @onResized
+    @statsController = new D.StatsController({
+      renderController: this,
+      el: document.body
+    })
+    @effectController = new D.SceneController({
+      renderController: this,
+      el: document.body
+    })
 
   onResized: =>
     @renderer.setSize(window.innerWidth, window.innerHeight)
-    @trigger 'resize'
 
   render: =>
-    @trigger('beforeRender')
-    @trigger('render')
-    @trigger('afterRender')
+    @renderer.clear()
+    @effectController.render()
     requestAnimationFrame(@render)

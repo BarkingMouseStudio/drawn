@@ -17,21 +17,24 @@
       this.renderer.setClearColorHex(0x444444, 1);
       this.renderer.autoClear = false;
       this.el.appendChild(this.renderer.domElement);
-      this.on('render', function() {
-        return this.renderer.clear();
-      });
       $(window).on('resize', this.onResized);
+      this.statsController = new D.StatsController({
+        renderController: this,
+        el: document.body
+      });
+      this.effectController = new D.SceneController({
+        renderController: this,
+        el: document.body
+      });
     }
 
     RenderController.prototype.onResized = function() {
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-      return this.trigger('resize');
+      return this.renderer.setSize(window.innerWidth, window.innerHeight);
     };
 
     RenderController.prototype.render = function() {
-      this.trigger('beforeRender');
-      this.trigger('render');
-      this.trigger('afterRender');
+      this.renderer.clear();
+      this.effectController.render();
       return requestAnimationFrame(this.render);
     };
 

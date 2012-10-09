@@ -18,16 +18,16 @@ class D.ParticlesController extends Backbone.View
       particle = new D.Particle3D()
       particles.vertices.push(particle)
 
-    particleSystem = new THREE.ParticleSystem(particles, material)
-    particleSystem.dynamic = true
-    particleSystem.sortParticles = true
-    @scene.add(particleSystem)
+    @particleSystem = new THREE.ParticleSystem(particles, material)
+    @particleSystem.dynamic = true
+    @particleSystem.sortParticles = true
+    @scene.add(@particleSystem)
 
-    @renderController.on 'beforeRender', =>
-      particleSystemGeometry = particleSystem.geometry
-      particles = particleSystemGeometry.vertices
-      particleCount = particles.length
-      while particleCount--
-        particle = particles[particleCount]
-        particle.update()
-      particleSystemGeometry.verticesNeedUpdate = true
+  render: =>
+    particleSystemGeometry = @particleSystem.geometry
+    particles = particleSystemGeometry.vertices
+    particleCount = particles.length
+    while particleCount--
+      particle = particles[particleCount]
+      particle.update()
+    particleSystemGeometry.verticesNeedUpdate = true
