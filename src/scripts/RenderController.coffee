@@ -25,4 +25,6 @@ class D.RenderController extends Backbone.View
   render: =>
     @renderer.clear()
     @effectController.render()
+    @statsController.update()
+
     requestAnimationFrame(@render)

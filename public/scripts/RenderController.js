@@ -35,6 +35,7 @@
     RenderController.prototype.render = function() {
       this.renderer.clear();
       this.effectController.render();
+      this.statsController.update();
       return requestAnimationFrame(this.render);
     };
 

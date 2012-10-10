@@ -1,60 +1,26 @@
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-    __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+  var __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
 
   D.SceneController = (function(_super) {
 
     __extends(SceneController, _super);
 
-    SceneController.prototype.onMouseDown = function(e) {
-      var intersects, mouse, ray;
-      this.mouseDown = true;
-      this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-      mouse = this.mouse.clone();
-      this.projector.unprojectVector(mouse, this.camera);
-      ray = new THREE.Ray(this.camera.position, mouse.subSelf(this.camera.position).normalize());
-      intersects = ray.intersectObjects(this.objects);
-      return console.log(intersects);
-    };
-
-    SceneController.prototype.onMouseUp = function(e) {
-      return this.mouseDown = false;
-    };
-
-    SceneController.prototype.onMouseMove = function(e) {
-      if (!this.mouseDown) {
-        return;
-      }
-      return this.dragging = true;
-    };
-
     function SceneController() {
-      this.onMouseMove = __bind(this.onMouseMove, this);
-
-      this.onMouseUp = __bind(this.onMouseUp, this);
-
-      this.onMouseDown = __bind(this.onMouseDown, this);
-
-      var ambientLight, aspectRatio, domElement, foregroundPass, height, parameters, pointLight, renderTarget, screenPass, viewAngle, width,
+      var ambientLight, aspectRatio, domElement, foregroundPass, parameters, pointLight, renderTarget, screenPass, viewAngle,
         _this = this;
       SceneController.__super__.constructor.apply(this, arguments);
-      this.mouse = new THREE.Vector3(0, 0, 0.5);
-      this.objects = [];
-      this.projector = new THREE.Projector();
       this.renderController = this.options.renderController;
       domElement = this.renderController.renderer.domElement;
-      domElement.addEventListener('mousedown', this.onMouseDown);
-      domElement.addEventListener('mousemove', this.onMouseMove);
-      domElement.addEventListener('mouseup', this.onMouseUp);
-      width = window.innerWidth;
-      height = window.innerHeight;
       viewAngle = 10;
-      aspectRatio = width / height;
+      aspectRatio = window.innerWidth / window.innerHeight;
       this.camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, 1, 10000);
       this.camera.position.z = 365;
-      this.controls = new THREE.TrackballControls(this.camera);
+      this.interactionController = new D.InteractionController({
+        camera: this.camera,
+        el: domElement
+      });
       this.scene = new THREE.Scene();
       this.scene.fog = new THREE.FogExp2(0x222222, 0.002);
       ambientLight = new THREE.AmbientLight(0x222222);
@@ -62,16 +28,23 @@
       pointLight = new THREE.PointLight(0xffffff, 1, 500);
       pointLight.position.set(250, 250, 250);
       this.scene.add(pointLight);
-      D.loadGeometry('models/ducky.js').done(function(geometry) {
-        var material, mesh, scale;
-        material = new THREE.MeshNormalMaterial({
-          shading: THREE.SmoothShading
+      $.when([D.loadGeometry('models/ducky_0.js'), D.loadGeometry('models/ducky_1.js'), D.loadGeometry('models/ducky_2.js'), D.loadGeometry('models/ducky_3.js'), D.loadGeometry('models/ducky_4.js'), D.loadGeometry('models/ducky_5.js')]).done(function() {
+        var geometries, group;
+        geometries = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        group = new THREE.Object3D();
+        _.each(geometries, function(geometry) {
+          var material, mesh, scale;
+          material = new THREE.MeshNormalMaterial({
+            shading: THREE.SmoothShading,
+            opacity: 0.8
+          });
+          mesh = new THREE.Mesh(geometry, material);
+          mesh.scale.set(scale = 10, scale, scale);
+          mesh.rotation.set(0, Math.PI / 2, 0);
+          return group.add(mesh);
         });
-        mesh = new THREE.Mesh(geometry, material);
-        mesh.scale.set(scale = 10, scale, scale);
-        mesh.rotation.set(0, Math.PI / 2, 0);
-        _this.objects.push(mesh);
-        return _this.scene.add(mesh);
+        _this.interactionController.setObject(group);
+        return _this.scene.add(group);
       });
       parameters = {
         minFilter: THREE.LinearFilter,
@@ -79,7 +52,7 @@
         format: THREE.RGBAFormat,
         stencilBuffer: true
       };
-      renderTarget = new THREE.WebGLRenderTarget(width, height, parameters);
+      renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, parameters);
       this.composer = new THREE.EffectComposer(this.renderController.renderer, renderTarget);
       foregroundPass = new THREE.RenderPass(this.scene, this.camera);
       screenPass = new THREE.ShaderPass(THREE.ShaderExtras.screen);
@@ -89,7 +62,7 @@
     }
 
     SceneController.prototype.render = function() {
-      this.controls.update();
+      this.interactionController.update();
       return this.composer.render();
     };
 

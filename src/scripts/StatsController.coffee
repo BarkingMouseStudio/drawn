@@ -5,3 +5,6 @@ class D.StatsController extends Backbone.View
     @stats = new Stats()
     @el.appendChild(@stats.domElement)
     @renderController.on('afterRender', @stats.update, @stats)
+
+  update: ->
+    @stats.update()

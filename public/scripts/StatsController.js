@@ -14,6 +14,10 @@
       this.renderController.on('afterRender', this.stats.update, this.stats);
     }
 
+    StatsController.prototype.update = function() {
+      return this.stats.update();
+    };
+
     return StatsController;
 
   })(Backbone.View);
