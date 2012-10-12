@@ -12,7 +12,10 @@
 
       this.onResized = __bind(this.onResized, this);
       RenderController.__super__.constructor.apply(this, arguments);
-      this.renderer = new THREE.WebGLRenderer();
+      this.renderer = new THREE.WebGLRenderer({
+        precision: 'highp',
+        antialias: true
+      });
       this.renderer.setSize(window.innerWidth, window.innerHeight);
       this.renderer.setClearColorHex(0x444444, 1);
       this.renderer.autoClear = false;
@@ -22,7 +25,7 @@
         renderController: this,
         el: document.body
       });
-      this.effectController = new D.SceneController({
+      this.sceneController = new D.SceneController({
         renderController: this,
         el: document.body
       });
@@ -34,7 +37,7 @@
 
     RenderController.prototype.render = function() {
       this.renderer.clear();
-      this.effectController.render();
+      this.sceneController.render();
       this.statsController.update();
       return requestAnimationFrame(this.render);
     };

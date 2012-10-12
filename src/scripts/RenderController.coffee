@@ -1,7 +1,10 @@
 class D.RenderController extends Backbone.View
   constructor: ->
     super
-    @renderer = new THREE.WebGLRenderer()
+    @renderer = new THREE.WebGLRenderer({
+      precision: 'highp',
+      antialias: true
+    })
     @renderer.setSize(window.innerWidth, window.innerHeight)
     @renderer.setClearColorHex(0x444444, 1)
     @renderer.autoClear = false
@@ -14,7 +17,7 @@ class D.RenderController extends Backbone.View
       renderController: this,
       el: document.body
     })
-    @effectController = new D.SceneController({
+    @sceneController = new D.SceneController({
       renderController: this,
       el: document.body
     })
@@ -24,7 +27,7 @@ class D.RenderController extends Backbone.View
 
   render: =>
     @renderer.clear()
-    @effectController.render()
+    @sceneController.render()
     @statsController.update()
 
     requestAnimationFrame(@render)

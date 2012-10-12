@@ -6,11 +6,13 @@ class D.SceneController extends Backbone.View
 
     { domElement } = @renderController.renderer
 
+    $(window).on('resize', @onResized)
+
     viewAngle = 10 # fov
     aspectRatio = window.innerWidth / window.innerHeight
 
     @camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, 1, 10000)
-    @camera.position.z = 365
+    @camera.position.z = 30
 
     @interactionController = new D.InteractionController
       camera: @camera
@@ -39,17 +41,16 @@ class D.SceneController extends Backbone.View
       group = new THREE.Object3D()
 
       _.each geometries, (geometry) =>
-        material = new THREE.MeshNormalMaterial({
-          shading: THREE.SmoothShading,
+        material = new THREE.MeshLambertMaterial({
           opacity: 0.8
         })
         mesh = new THREE.Mesh(geometry, material)
-        mesh.scale.set(scale=10, scale, scale)
-        mesh.rotation.set(0, Math.PI / 2, 0)
         group.add(mesh)
 
       @interactionController.setObject(group)
-      @scene.add(group)
+      @scene.add(@interactionController.parentObject)
+      @interactionController.parentObject
+        .rotation.set(0, Math.PI / 2, 0)
 
     parameters =
       minFilter: THREE.LinearFilter
@@ -62,11 +63,18 @@ class D.SceneController extends Backbone.View
 
     foregroundPass = new THREE.RenderPass(@scene, @camera)
 
+    vignettePass = new THREE.ShaderPass(THREE.ShaderExtras.vignette)
+
     screenPass = new THREE.ShaderPass(THREE.ShaderExtras.screen)
     screenPass.renderToScreen = true
 
     @composer.addPass(foregroundPass)
+    @composer.addPass(vignettePass)
     @composer.addPass(screenPass)
+
+  onResized: =>
+    # TODO: Implement resizing
+    console.warn 'Implement resizing'
 
   render: ->
     # @controls.update()

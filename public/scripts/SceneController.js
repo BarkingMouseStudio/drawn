@@ -1,5 +1,6 @@
 (function() {
-  var __hasProp = {}.hasOwnProperty,
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+    __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
 
@@ -8,15 +9,18 @@
     __extends(SceneController, _super);
 
     function SceneController() {
-      var ambientLight, aspectRatio, domElement, foregroundPass, parameters, pointLight, renderTarget, screenPass, viewAngle,
+      this.onResized = __bind(this.onResized, this);
+
+      var ambientLight, aspectRatio, domElement, foregroundPass, parameters, pointLight, renderTarget, screenPass, viewAngle, vignettePass,
         _this = this;
       SceneController.__super__.constructor.apply(this, arguments);
       this.renderController = this.options.renderController;
       domElement = this.renderController.renderer.domElement;
+      $(window).on('resize', this.onResized);
       viewAngle = 10;
       aspectRatio = window.innerWidth / window.innerHeight;
       this.camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, 1, 10000);
-      this.camera.position.z = 365;
+      this.camera.position.z = 30;
       this.interactionController = new D.InteractionController({
         camera: this.camera,
         el: domElement
@@ -33,18 +37,16 @@
         geometries = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
         group = new THREE.Object3D();
         _.each(geometries, function(geometry) {
-          var material, mesh, scale;
-          material = new THREE.MeshNormalMaterial({
-            shading: THREE.SmoothShading,
+          var material, mesh;
+          material = new THREE.MeshLambertMaterial({
             opacity: 0.8
           });
           mesh = new THREE.Mesh(geometry, material);
-          mesh.scale.set(scale = 10, scale, scale);
-          mesh.rotation.set(0, Math.PI / 2, 0);
           return group.add(mesh);
         });
         _this.interactionController.setObject(group);
-        return _this.scene.add(group);
+        _this.scene.add(_this.interactionController.parentObject);
+        return _this.interactionController.parentObject.rotation.set(0, Math.PI / 2, 0);
       });
       parameters = {
         minFilter: THREE.LinearFilter,
@@ -55,11 +57,17 @@
       renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, parameters);
       this.composer = new THREE.EffectComposer(this.renderController.renderer, renderTarget);
       foregroundPass = new THREE.RenderPass(this.scene, this.camera);
+      vignettePass = new THREE.ShaderPass(THREE.ShaderExtras.vignette);
       screenPass = new THREE.ShaderPass(THREE.ShaderExtras.screen);
       screenPass.renderToScreen = true;
       this.composer.addPass(foregroundPass);
+      this.composer.addPass(vignettePass);
       this.composer.addPass(screenPass);
     }
+
+    SceneController.prototype.onResized = function() {
+      return console.warn('Implement resizing');
+    };
 
     SceneController.prototype.render = function() {
       this.interactionController.update();

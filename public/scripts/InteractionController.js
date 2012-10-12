@@ -14,7 +14,6 @@
     InteractionController.prototype.drag = 0.9;
 
     function InteractionController(options) {
-      var _ref;
       this.options = options;
       this.update = __bind(this.update, this);
 
@@ -26,23 +25,32 @@
 
       this.setObject = __bind(this.setObject, this);
 
-      _ref = this.options, this.camera = _ref.camera, this.el = _ref.el;
-      this.el.addEventListener('mousedown', this.onMouseDown);
-      this.el.addEventListener('mousemove', this.onMouseMove);
-      this.el.addEventListener('mouseup', this.onMouseUp);
-      this.initMouse = new THREE.Vector3(0, 0, 0.5);
-      this.mouse = new THREE.Vector3(0, 0, 0.5);
+      InteractionController.__super__.constructor.apply(this, arguments);
+      this.camera = this.options.camera;
+      this.$el.on('mousedown', this.onMouseDown);
+      this.$el.on('mousemove', this.onMouseMove);
+      this.$el.on('mouseup', this.onMouseUp);
+      this.initMouse = new THREE.Vector3();
+      this.mouse = new THREE.Vector3();
       this.projector = new THREE.Projector();
       this.rotationalVelocity = new THREE.Vector3();
       this.rotationalAcceleration = new THREE.Vector3();
     }
 
     InteractionController.prototype.setObject = function(object) {
+      var _this = this;
       this.object = object;
+      this.parentObject = new THREE.Object3D();
+      this.boxes = new THREE.Object3D();
+      this.object.children.forEach(function(object) {
+        return _this.boxes.add(D.createBoundingCubeFromObject(object));
+      });
+      this.parentObject.add(this.object);
+      return this.parentObject.add(this.boxes);
     };
 
     InteractionController.prototype.onMouseDown = function(e) {
-      var intersects, mouse, nearest, ray, _ref;
+      var box, intersects, mouse, nearest, normal, ray, _ref;
       this.mouseDown = true;
       this.initMouse.x = this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.initMouse.y = this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -61,7 +69,15 @@
       this.activeObject = nearest != null ? nearest.object : void 0;
       if (this.activeObject) {
         this.activeObject.material.opacity = 1.0;
-        return this.activeObject.material.needsUpdate = true;
+        this.activeObject.material.needsUpdate = true;
+        box = this.boxes.children[_.indexOf(this.object.children, this.activeObject)];
+        console.warn(box);
+        intersects = ray.intersectObject(box);
+        console.warn(intersects);
+        if (intersects) {
+          normal = intersects[0].face.normal;
+          return console.warn(normal);
+        }
       }
     };
 
@@ -92,7 +108,7 @@
       if (this.activeObject != null) {
         this.activeObject.rotation.addSelf(this.rotationalVelocity);
       } else {
-        this.object.rotation.addSelf(this.rotationalVelocity);
+        this.parentObject.rotation.addSelf(this.rotationalVelocity);
       }
       return this.rotationalVelocity.multiplyScalar(this.drag);
     };

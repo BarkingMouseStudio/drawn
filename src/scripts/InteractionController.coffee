@@ -5,20 +5,28 @@ class D.InteractionController extends Backbone.View
   drag: 0.9
 
   constructor: (@options) ->
-    { @camera, @el } = @options
+    super
 
-    @el.addEventListener('mousedown', @onMouseDown)
-    @el.addEventListener('mousemove', @onMouseMove)
-    @el.addEventListener('mouseup', @onMouseUp)
+    { @camera } = @options
 
-    @initMouse = new THREE.Vector3(0, 0, 0.5)
-    @mouse = new THREE.Vector3(0, 0, 0.5)
+    @$el.on('mousedown', @onMouseDown)
+    @$el.on('mousemove', @onMouseMove)
+    @$el.on('mouseup', @onMouseUp)
+
+    @initMouse = new THREE.Vector3()
+    @mouse = new THREE.Vector3()
     @projector = new THREE.Projector()
 
     @rotationalVelocity = new THREE.Vector3()
     @rotationalAcceleration = new THREE.Vector3()
 
   setObject: (@object) =>
+    @parentObject = new THREE.Object3D()
+    @boxes = new THREE.Object3D()
+    @object.children.forEach (object) =>
+      @boxes.add(D.createBoundingCubeFromObject(object))
+    @parentObject.add(@object)
+    @parentObject.add(@boxes)
 
   onMouseDown: (e) =>
     @mouseDown = true
@@ -47,6 +55,11 @@ class D.InteractionController extends Backbone.View
     if @activeObject
       @activeObject.material.opacity = 1.0
       @activeObject.material.needsUpdate = true
+
+      box = @boxes.children[_.indexOf(@object.children, @activeObject)]
+      intersects = ray.intersectObject(box)
+      if intersects
+        normal = intersects[0].face.normal
 
   onMouseUp: (e) =>
     @mouseDown = false
@@ -90,6 +103,6 @@ class D.InteractionController extends Backbone.View
     if @activeObject?
       @activeObject.rotation.addSelf(@rotationalVelocity)
     else
-      @object.rotation.addSelf(@rotationalVelocity)
+      @parentObject.rotation.addSelf(@rotationalVelocity)
 
     @rotationalVelocity.multiplyScalar(@drag)
