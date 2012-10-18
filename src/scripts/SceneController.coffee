@@ -41,16 +41,18 @@ class D.SceneController extends Backbone.View
       group = new THREE.Object3D()
 
       _.each geometries, (geometry) =>
-        material = new THREE.MeshLambertMaterial({
+        material = new THREE.MeshNormalMaterial({
           opacity: 0.8
         })
         mesh = new THREE.Mesh(geometry, material)
         group.add(mesh)
+        boundingCube = D.createBoundingCubeFromObject(mesh)
+        boundingCube.name = 'boundingCube'
+        mesh.add(boundingCube)
 
+      group.rotation.set(0, Math.PI / 2, 0)
+      @scene.add(group)
       @interactionController.setObject(group)
-      @scene.add(@interactionController.parentObject)
-      @interactionController.parentObject
-        .rotation.set(0, Math.PI / 2, 0)
 
     parameters =
       minFilter: THREE.LinearFilter

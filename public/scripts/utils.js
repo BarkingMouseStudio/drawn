@@ -32,6 +32,20 @@
     return radians * (180 / Math.PI);
   };
 
+  D.snapVector = function(vector) {
+    var xMagnitude, yMagnitude;
+    xMagnitude = Math.abs(vector.x);
+    yMagnitude = Math.abs(vector.y);
+    if (xMagnitude > yMagnitude) {
+      vector.y = 0;
+    } else if (yMagnitude > xMagnitude) {
+      vector.x = 0;
+    } else {
+      vector.multiplyScalar(0);
+    }
+    return vector;
+  };
+
   D.createBoundingCubeFromObject = function(mesh) {
     var boundingBox, boundingBoxMidpoint, cubeGeometry, cubeMaterial, cubeMesh, depth, geometry, height, width;
     geometry = mesh.geometry;

@@ -17,6 +17,17 @@ D.degreesToRadians = (degrees) ->
 D.radiansToDegrees = (radians) ->
   return radians * (180 / Math.PI)
 
+D.snapVector = (vector) ->
+  xMagnitude = Math.abs(vector.x)
+  yMagnitude = Math.abs(vector.y)
+  if xMagnitude > yMagnitude
+    vector.y = 0
+  else if yMagnitude > xMagnitude
+    vector.x = 0
+  else
+    vector.multiplyScalar(0)
+  return vector
+
 D.createBoundingCubeFromObject = (mesh) ->
   { geometry } = mesh
   geometry.computeBoundingBox()

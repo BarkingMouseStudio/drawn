@@ -37,16 +37,19 @@
         geometries = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
         group = new THREE.Object3D();
         _.each(geometries, function(geometry) {
-          var material, mesh;
-          material = new THREE.MeshLambertMaterial({
+          var boundingCube, material, mesh;
+          material = new THREE.MeshNormalMaterial({
             opacity: 0.8
           });
           mesh = new THREE.Mesh(geometry, material);
-          return group.add(mesh);
+          group.add(mesh);
+          boundingCube = D.createBoundingCubeFromObject(mesh);
+          boundingCube.name = 'boundingCube';
+          return mesh.add(boundingCube);
         });
-        _this.interactionController.setObject(group);
-        _this.scene.add(_this.interactionController.parentObject);
-        return _this.interactionController.parentObject.rotation.set(0, Math.PI / 2, 0);
+        group.rotation.set(0, Math.PI / 2, 0);
+        _this.scene.add(group);
+        return _this.interactionController.setObject(group);
       });
       parameters = {
         minFilter: THREE.LinearFilter,

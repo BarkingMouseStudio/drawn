@@ -1,7 +1,7 @@
 class D.InteractionController extends Backbone.View
   mouseDown: false
 
-  deceleration: 0.15
+  deceleration: 0.02
   drag: 0.9
 
   constructor: (@options) ->
@@ -13,89 +13,77 @@ class D.InteractionController extends Backbone.View
     @$el.on('mousemove', @onMouseMove)
     @$el.on('mouseup', @onMouseUp)
 
-    @initMouse = new THREE.Vector3()
-    @mouse = new THREE.Vector3()
+    @initMouse = new THREE.Vector3(0, 0, 1)
+    @mouse = new THREE.Vector3(0, 0, 1)
     @projector = new THREE.Projector()
 
     @rotationalVelocity = new THREE.Vector3()
     @rotationalAcceleration = new THREE.Vector3()
 
   setObject: (@object) =>
-    @parentObject = new THREE.Object3D()
-    @boxes = new THREE.Object3D()
-    @object.children.forEach (object) =>
-      @boxes.add(D.createBoundingCubeFromObject(object))
-    @parentObject.add(@object)
-    @parentObject.add(@boxes)
+
+  projectMouse: (objects) ->
+    mouse = @initMouse.clone()
+    @projector.unprojectVector(mouse, @camera)
+    ray = new THREE.Ray(@camera.position,
+      mouse.subSelf(@camera.position)
+        .normalize())
+    intersects = ray.intersectObjects(objects)
+    return intersects[0]
+
+  updateMouseVector: (mouse, e) =>
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+
+  onMouseUp: (e) =>
+    @mouseDown = false
+    @direction = null
 
   onMouseDown: (e) =>
     @mouseDown = true
 
-    @initMouse.x = @mouse.x = (e.clientX / window.innerWidth) * 2 - 1
-    @initMouse.y = @mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
-
-    unless @object?.children.length
-      return
-
-    mouse = @initMouse.clone()
-    @projector.unprojectVector(mouse, @camera)
-
-    ray = new THREE.Ray(@camera.position,
-      mouse.subSelf(@camera.position)
-        .normalize())
-    intersects = ray.intersectObjects(@object.children)
-    nearest = intersects[0]
+    @updateMouseVector(@mouse, e)
+    @initMouse.copy(@mouse)
 
     _.each @object.children, (object) ->
-      object.material.opacity = 0.8
-      object.material.needsUpdate = true
+      { material } = object
+      material.opacity = 0.8
+      material.needsUpdate = true
 
-    @activeObject = nearest?.object
+    nearest = @projectMouse(@object.children)
 
-    if @activeObject
-      @activeObject.material.opacity = 1.0
-      @activeObject.material.needsUpdate = true
+    @activeObject = if nearest then nearest.object else null
 
-      box = @boxes.children[_.indexOf(@object.children, @activeObject)]
-      intersects = ray.intersectObject(box)
-      if intersects
-        normal = intersects[0].face.normal
+    return unless @activeObject
 
-  onMouseUp: (e) =>
-    @mouseDown = false
+    { material } = @activeObject
+    material.opacity = 1.0
+
+    boundingCube = @activeObject.getChildByName('boundingCube')
+    nearest = @projectMouse([boundingCube])
+
+    @activeNormal = if nearest then nearest.face.normal.clone()
+      .addSelf(@activeObject.rotation) else null
 
   onMouseMove: (e) =>
-    @mouse.x = (e.clientX / window.innerWidth) * 2 - 1
-    @mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+    return unless @mouseDown and @object
+    @updateMouseVector(@mouse, e)
 
-    unless @mouseDown
-      return
-
-    @dragging = true
-
-    mouseDiff = @mouse.clone()
+    mouseDirection = @mouse.clone()
       .subSelf(@initMouse)
-      .multiplyScalar(Math.PI)
+      .normalize()
 
-    @rotationalAcceleration.addSelf(new THREE.Vector3(-mouseDiff.y, mouseDiff.x, 0))
+    unless @activeNormal
+      @rotationalAcceleration.addSelf(new THREE.Vector3(-mouseDirection.y, mouseDirection.x, 0))
+    else
+      unless @direction
+        @direction = D.snapVector(mouseDirection.clone())
+      @rotationalAcceleration.addSelf(new THREE.Vector3(-@direction.y, @direction.x, 0))
 
-    @initMouse.x = @mouse.x
-    @initMouse.y = @mouse.y
-
-    # if @activeObject
-    #   @onDragObject(e)
-    # else
-    #   @onDragGroup(e)
-
-  # onDragObject: (e) =>
-    # console.warn 'dragging object'
-
-  # onDragGroup: (e) =>
-    # console.warn 'dragging group'
+    @initMouse.copy(@mouse)
 
   update: =>
-    unless @object
-      return
+    return unless @object
 
     @rotationalAcceleration.multiplyScalar(@deceleration)
     @rotationalVelocity.addSelf(@rotationalAcceleration)
@@ -103,6 +91,6 @@ class D.InteractionController extends Backbone.View
     if @activeObject?
       @activeObject.rotation.addSelf(@rotationalVelocity)
     else
-      @parentObject.rotation.addSelf(@rotationalVelocity)
+      @object.rotation.addSelf(@rotationalVelocity)
 
     @rotationalVelocity.multiplyScalar(@drag)
