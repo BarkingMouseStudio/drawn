@@ -37,13 +37,15 @@
     xMagnitude = Math.abs(vector.x);
     yMagnitude = Math.abs(vector.y);
     if (xMagnitude > yMagnitude) {
+      vector.x = 1;
       vector.y = 0;
     } else if (yMagnitude > xMagnitude) {
       vector.x = 0;
+      vector.y = 1;
     } else {
       vector.multiplyScalar(0);
     }
-    return vector;
+    return vector.normalize();
   };
 
   D.createBoundingCubeFromObject = function(mesh) {

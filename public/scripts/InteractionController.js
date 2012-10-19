@@ -9,7 +9,7 @@
 
     InteractionController.prototype.mouseDown = false;
 
-    InteractionController.prototype.deceleration = 0.02;
+    InteractionController.prototype.deceleration = 0.2;
 
     InteractionController.prototype.drag = 0.9;
 
@@ -59,7 +59,9 @@
 
     InteractionController.prototype.onMouseUp = function(e) {
       this.mouseDown = false;
-      return this.direction = null;
+      this.partialObject = null;
+      this.activeNormal = null;
+      return this.mouseDirection = null;
     };
 
     InteractionController.prototype.onMouseDown = function(e) {
@@ -74,32 +76,34 @@
         return material.needsUpdate = true;
       });
       nearest = this.projectMouse(this.object.children);
-      this.activeObject = nearest ? nearest.object : null;
-      if (!this.activeObject) {
+      this.partialObject = nearest ? nearest.object : null;
+      if (!this.partialObject) {
         return;
       }
-      material = this.activeObject.material;
+      material = this.partialObject.material;
       material.opacity = 1.0;
-      boundingCube = this.activeObject.getChildByName('boundingCube');
+      boundingCube = this.partialObject.getChildByName('boundingCube');
       nearest = this.projectMouse([boundingCube]);
-      return this.activeNormal = nearest ? nearest.face.normal.clone().addSelf(this.activeObject.rotation) : null;
+      return this.activeNormal = nearest ? nearest.face.normal.clone().addSelf(this.partialObject.rotation) : null;
     };
 
     InteractionController.prototype.onMouseMove = function(e) {
-      var mouseDirection;
+      var mouseDirection, rotation;
       if (!(this.mouseDown && this.object)) {
         return;
       }
       this.updateMouseVector(this.mouse, e);
-      mouseDirection = this.mouse.clone().subSelf(this.initMouse).normalize();
+      mouseDirection = this.mouse.clone().subSelf(this.initMouse);
       if (!this.activeNormal) {
-        this.rotationalAcceleration.addSelf(new THREE.Vector3(-mouseDirection.y, mouseDirection.x, 0));
+        rotation = new THREE.Vector3(-mouseDirection.y, mouseDirection.x, 0);
       } else {
-        if (!this.direction) {
-          this.direction = D.snapVector(mouseDirection.clone());
+        if (!this.mouseDirection) {
+          this.mouseDirection = D.snapVector(mouseDirection.clone());
+          this.mouseDirection.multiplyScalar(0.2);
         }
-        this.rotationalAcceleration.addSelf(new THREE.Vector3(-this.direction.y, this.direction.x, 0));
+        rotation = new THREE.Vector3(0, this.mouseDirection.x, -this.mouseDirection.y);
       }
+      this.rotationalAcceleration.addSelf(rotation);
       return this.initMouse.copy(this.mouse);
     };
 
@@ -109,8 +113,8 @@
       }
       this.rotationalAcceleration.multiplyScalar(this.deceleration);
       this.rotationalVelocity.addSelf(this.rotationalAcceleration);
-      if (this.activeObject != null) {
-        this.activeObject.rotation.addSelf(this.rotationalVelocity);
+      if (this.partialObject != null) {
+        this.partialObject.rotation.addSelf(this.rotationalVelocity);
       } else {
         this.object.rotation.addSelf(this.rotationalVelocity);
       }

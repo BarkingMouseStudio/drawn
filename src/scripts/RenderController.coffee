@@ -11,8 +11,6 @@ class D.RenderController extends Backbone.View
 
     @el.appendChild(@renderer.domElement)
 
-    $(window).on('resize', @onResized)
-
     @statsController = new D.StatsController({
       renderController: this,
       el: document.body
@@ -21,9 +19,6 @@ class D.RenderController extends Backbone.View
       renderController: this,
       el: document.body
     })
-
-  onResized: =>
-    @renderer.setSize(window.innerWidth, window.innerHeight)
 
   render: =>
     @renderer.clear()

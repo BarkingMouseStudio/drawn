@@ -6,8 +6,6 @@ class D.SceneController extends Backbone.View
 
     { domElement } = @renderController.renderer
 
-    $(window).on('resize', @onResized)
-
     viewAngle = 10 # fov
     aspectRatio = window.innerWidth / window.innerHeight
 
@@ -17,8 +15,6 @@ class D.SceneController extends Backbone.View
     @interactionController = new D.InteractionController
       camera: @camera
       el: domElement
-
-    # @controls = new THREE.TrackballControls(@camera)
 
     @scene = new THREE.Scene()
     @scene.fog = new THREE.FogExp2(0x222222, 0.002)
@@ -74,11 +70,6 @@ class D.SceneController extends Backbone.View
     @composer.addPass(vignettePass)
     @composer.addPass(screenPass)
 
-  onResized: =>
-    # TODO: Implement resizing
-    console.warn 'Implement resizing'
-
   render: ->
-    # @controls.update()
     @interactionController.update()
     @composer.render()

@@ -9,8 +9,6 @@
 
     function RenderController() {
       this.render = __bind(this.render, this);
-
-      this.onResized = __bind(this.onResized, this);
       RenderController.__super__.constructor.apply(this, arguments);
       this.renderer = new THREE.WebGLRenderer({
         precision: 'highp',
@@ -20,7 +18,6 @@
       this.renderer.setClearColorHex(0x444444, 1);
       this.renderer.autoClear = false;
       this.el.appendChild(this.renderer.domElement);
-      $(window).on('resize', this.onResized);
       this.statsController = new D.StatsController({
         renderController: this,
         el: document.body
@@ -30,10 +27,6 @@
         el: document.body
       });
     }
-
-    RenderController.prototype.onResized = function() {
-      return this.renderer.setSize(window.innerWidth, window.innerHeight);
-    };
 
     RenderController.prototype.render = function() {
       this.renderer.clear();

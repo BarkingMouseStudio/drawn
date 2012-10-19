@@ -17,17 +17,22 @@ D.degreesToRadians = (degrees) ->
 D.radiansToDegrees = (radians) ->
   return radians * (180 / Math.PI)
 
+# Align a vector to either the x or y axis
 D.snapVector = (vector) ->
   xMagnitude = Math.abs(vector.x)
   yMagnitude = Math.abs(vector.y)
   if xMagnitude > yMagnitude
+    vector.x = 1
     vector.y = 0
   else if yMagnitude > xMagnitude
     vector.x = 0
+    vector.y = 1
   else
     vector.multiplyScalar(0)
-  return vector
+  return vector.normalize()
 
+# Creates a workable cube from a meshes bounding box
+# (Currently this cube is rendered but it doesn't need to be)
 D.createBoundingCubeFromObject = (mesh) ->
   { geometry } = mesh
   geometry.computeBoundingBox()

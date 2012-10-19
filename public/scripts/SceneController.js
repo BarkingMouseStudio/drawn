@@ -1,6 +1,5 @@
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-    __hasProp = {}.hasOwnProperty,
+  var __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     __slice = [].slice;
 
@@ -9,14 +8,11 @@
     __extends(SceneController, _super);
 
     function SceneController() {
-      this.onResized = __bind(this.onResized, this);
-
       var ambientLight, aspectRatio, domElement, foregroundPass, parameters, pointLight, renderTarget, screenPass, viewAngle, vignettePass,
         _this = this;
       SceneController.__super__.constructor.apply(this, arguments);
       this.renderController = this.options.renderController;
       domElement = this.renderController.renderer.domElement;
-      $(window).on('resize', this.onResized);
       viewAngle = 10;
       aspectRatio = window.innerWidth / window.innerHeight;
       this.camera = new THREE.PerspectiveCamera(viewAngle, aspectRatio, 1, 10000);
@@ -67,10 +63,6 @@
       this.composer.addPass(vignettePass);
       this.composer.addPass(screenPass);
     }
-
-    SceneController.prototype.onResized = function() {
-      return console.warn('Implement resizing');
-    };
 
     SceneController.prototype.render = function() {
       this.interactionController.update();
